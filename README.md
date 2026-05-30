@@ -21,6 +21,8 @@ A multi-agent simulation where AI agents live, interact, and form a virtual comm
 
 ## Getting Started
 
+### Option 1: Command Line (Terminal)
+
 ```bash
 # Install dependencies
 pip install -r requirements.txt
@@ -31,6 +33,20 @@ python main.py
 # Run with custom configuration
 python main.py --config config/custom.json
 ```
+
+### Option 2: Web Dashboard (Browser) 🌐
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Start the web dashboard
+python web_app.py
+
+# Open your browser to http://localhost:5000
+```
+
+The web dashboard provides a **real-time visual interface** to monitor agents, locations, and interactions. See [WEB_README.md](WEB_README.md) for details.
 
 ## Configuration
 
