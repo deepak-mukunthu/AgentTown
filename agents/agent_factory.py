@@ -48,6 +48,16 @@ class AgentFactory:
             "traits": ["calm", "pragmatic", "friendly"],
             "preferred_locations": [],
             "style": "casual"
+        },
+        "villain": {
+            "traits": ["aggressive", "volatile", "unpredictable"],
+            "preferred_locations": ["Town Square", "Park"],
+            "style": "direct"
+        },
+        "doctor": {
+            "traits": ["empathetic", "calm", "analytical"],
+            "preferred_locations": ["Library", "Community Center"],
+            "style": "formal"
         }
     }
 
@@ -86,6 +96,10 @@ class AgentFactory:
         used_names = set()
         agents = []
 
+        # Always create exactly 1 villain and 1 doctor
+        villain_created = False
+        doctor_created = False
+
         for i in range(count):
             # Ensure unique names
             available_names = [n for n in cls.FIRST_NAMES if n not in used_names]
@@ -99,7 +113,18 @@ class AgentFactory:
             # Randomly assign starting location
             location = random.choice(starting_locations)
 
-            agent = cls.create_agent(name=name, starting_location=location)
+            # Assign special roles first
+            if not villain_created:
+                role = "villain"
+                villain_created = True
+            elif not doctor_created:
+                role = "doctor"
+                doctor_created = True
+            else:
+                # Random role for remaining agents (excluding villain and doctor)
+                role = random.choice(["artist", "scholar", "explorer", "socialite", "resident"])
+
+            agent = cls.create_agent(name=name, starting_location=location, role=role)
             agents.append(agent)
 
         return agents

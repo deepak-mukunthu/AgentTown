@@ -90,7 +90,9 @@ def get_simulation_state():
             "style": agent.conversation_style,
             "location": agent.current_location,
             "memory_count": len(agent.memories),
-            "role": agent.role
+            "role": agent.role,
+            "status": agent.status,
+            "anger_level": agent.anger_level if agent.role == "villain" else 0
         })
 
     # Add location information

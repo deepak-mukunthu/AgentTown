@@ -20,8 +20,11 @@ class Agent(BaseModel):
     current_location: str
     memories: List[Memory] = Field(default_factory=list)
     conversation_style: str = "friendly"
-    role: str = "resident"  # resident, artist, scholar, explorer, socialite
+    role: str = "resident"  # resident, artist, scholar, explorer, socialite, villain, doctor
     preferred_locations: List[str] = Field(default_factory=list)
+    status: str = "alive"  # alive, dead
+    anger_level: float = 0.0  # 0.0 to 1.0, used by villain
+    last_kill_step: int = -999  # Track when villain last killed
 
     class Config:
         arbitrary_types_allowed = True
@@ -63,11 +66,16 @@ class Agent(BaseModel):
 
     def should_interact(self, probability: float = 0.3) -> bool:
         """Determine if agent should initiate interaction"""
+        if self.status == "dead":
+            return False  # Dead agents can't interact
+
         # Role-based interaction probability
         if self.role == "socialite":
             probability *= 2.0  # Socialites interact more
         elif self.role == "scholar":
             probability *= 1.2  # Scholars like discussions
+        elif self.role == "villain":
+            probability *= 0.5  # Villains are more isolated
 
         return random.random() < probability
 
@@ -82,13 +90,38 @@ class Agent(BaseModel):
         # Default: random choice
         return random.choice(available_locations) if available_locations else None
 
+    def increase_anger(self, amount: float = 0.1):
+        """Increase anger level (for villains)"""
+        self.anger_level = min(1.0, self.anger_level + amount)
+
+    def decrease_anger(self, amount: float = 0.3):
+        """Decrease anger level after action"""
+        self.anger_level = max(0.0, self.anger_level - amount)
+
+    def is_angry(self) -> bool:
+        """Check if agent is angry enough to attack"""
+        return self.role == "villain" and self.anger_level > 0.6
+
+    def kill(self):
+        """Mark agent as dead"""
+        self.status = "dead"
+
+    def resurrect(self):
+        """Bring agent back to life"""
+        self.status = "alive"
+
     def should_move(self, probability: float = 0.2) -> bool:
         """Determine if agent should move to a new location"""
+        if self.status == "dead":
+            return False  # Dead agents can't move
+
         # Role-based movement probability
         if self.role == "explorer":
             probability *= 2.0  # Explorers move more
         elif self.role == "scholar":
             probability *= 0.5  # Scholars stay put more
+        elif self.role == "doctor":
+            probability *= 1.5  # Doctors move around to find patients
 
         return random.random() < probability
 

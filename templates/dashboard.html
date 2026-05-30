@@ -174,6 +174,20 @@
             border-left: 4px solid #10b981;
         }
 
+        .agent-card.villain {
+            border-left-color: #ef4444;
+        }
+
+        .agent-card.doctor {
+            border-left-color: #3b82f6;
+        }
+
+        .agent-card.dead {
+            background: #1f2937;
+            color: #9ca3af;
+            opacity: 0.7;
+        }
+
         .agent-name {
             font-weight: bold;
             color: #10b981;
@@ -266,6 +280,16 @@
 
         .activity-item.conversation {
             border-left-color: #10b981;
+        }
+
+        .activity-item.attack {
+            border-left-color: #ef4444;
+            background: #fee;
+        }
+
+        .activity-item.resurrection {
+            border-left-color: #3b82f6;
+            background: #eff6ff;
         }
 
         .activity-time {
@@ -408,21 +432,32 @@
                 'scholar': '📚',
                 'explorer': '🧭',
                 'socialite': '🎭',
-                'resident': '🏠'
+                'resident': '🏠',
+                'villain': '😈',
+                'doctor': '⚕️'
             };
 
-            const agentsHtml = data.agents.map(agent => `
-                <div class="agent-card">
-                    <div class="agent-name">${roleEmojis[agent.role] || '👤'} ${agent.name}</div>
-                    <div class="agent-details">
-                        <div><strong>Role:</strong> ${agent.role.charAt(0).toUpperCase() + agent.role.slice(1)}</div>
-                        <div>📍 ${agent.location}</div>
-                        <div>✨ ${agent.personality}</div>
-                        <div>💬 ${agent.style}</div>
-                        <div>🧠 ${agent.memory_count} memories</div>
+            const agentsHtml = data.agents.map(agent => {
+                const cardClass = agent.status === 'dead' ? 'agent-card dead' : `agent-card ${agent.role}`;
+                const statusEmoji = agent.status === 'dead' ? '💀 DEAD' : '✅ Alive';
+                const angerBar = agent.role === 'villain' ?
+                    `<div>😡 Anger: <div style="background:#ef4444;width:${agent.anger_level*100}%;height:8px;border-radius:4px;"></div></div>` : '';
+
+                return `
+                    <div class="${cardClass}">
+                        <div class="agent-name">${roleEmojis[agent.role] || '👤'} ${agent.name}</div>
+                        <div class="agent-details">
+                            <div><strong>Role:</strong> ${agent.role.charAt(0).toUpperCase() + agent.role.slice(1)}</div>
+                            <div><strong>Status:</strong> ${statusEmoji}</div>
+                            <div>📍 ${agent.location}</div>
+                            <div>✨ ${agent.personality}</div>
+                            <div>💬 ${agent.style}</div>
+                            <div>🧠 ${agent.memory_count} memories</div>
+                            ${angerBar}
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
             document.getElementById('agents').innerHTML = agentsHtml;
 
             // Update activity feed
@@ -450,6 +485,38 @@
                                 <div class="movement-text">
                                     <span class="movement-icon">🚶</span>
                                     <strong>${event.agent}</strong> moved from <strong>${event.from}</strong> to <strong>${event.to}</strong>
+                                </div>
+                            </div>
+                        `;
+                    } else if (event.type === 'attack') {
+                        return `
+                            <div class="activity-item attack">
+                                <div class="activity-time">${event.time}</div>
+                                <div style="color: #ef4444; font-weight: bold;">
+                                    ⚠️ ATTACK at ${event.location}
+                                </div>
+                                <div style="font-size: 0.9em;">
+                                    <strong style="color: #7f1d1d;">${event.attacker}</strong> attacked
+                                    <strong style="color: #7f1d1d;">${event.victim}</strong>
+                                </div>
+                                <div style="font-size: 0.85em; color: #991b1b; margin-top: 5px;">
+                                    💀 ${event.victim} is dead!
+                                </div>
+                            </div>
+                        `;
+                    } else if (event.type === 'resurrection') {
+                        return `
+                            <div class="activity-item resurrection">
+                                <div class="activity-time">${event.time}</div>
+                                <div style="color: #3b82f6; font-weight: bold;">
+                                    ✨ RESURRECTION at ${event.location}
+                                </div>
+                                <div style="font-size: 0.9em;">
+                                    <strong style="color: #1e40af;">${event.doctor}</strong> resurrected
+                                    <strong style="color: #1e40af;">${event.patient}</strong>
+                                </div>
+                                <div style="font-size: 0.85em; color: #1e3a8a; margin-top: 5px;">
+                                    ✅ ${event.patient} is alive again!
                                 </div>
                             </div>
                         `;

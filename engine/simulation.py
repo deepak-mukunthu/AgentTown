@@ -51,7 +51,20 @@ class SimulationEngine:
 
     def _agent_action(self, agent: Agent):
         """Determine and execute an action for an agent"""
+        if agent.status == "dead":
+            return  # Dead agents can't act
+
         current_location = self.locations[agent.current_location]
+
+        # Special actions for villain
+        if agent.role == "villain":
+            self._villain_action(agent)
+            return
+
+        # Special actions for doctor
+        if agent.role == "doctor":
+            self._doctor_action(agent)
+            return
 
         # Check if agent wants to move
         if agent.should_move(probability=0.15):
@@ -61,7 +74,7 @@ class SimulationEngine:
         # Check if agent wants to interact
         if agent.should_interact(probability=0.4):
             other_agents = self._get_agents_at_location(agent.current_location)
-            other_agents = [a for a in other_agents if a.name != agent.name]
+            other_agents = [a for a in other_agents if a.name != agent.name and a.status == "alive"]
 
             if other_agents:
                 self._initiate_interaction(agent, random.choice(other_agents))
@@ -148,6 +161,159 @@ class SimulationEngine:
             speaker = exchange["speaker"]
             message = exchange["message"]
             self.console.print(f"    [cyan]{speaker}:[/cyan] \"{message}\"")
+
+    def _villain_action(self, agent: Agent):
+        """Villain-specific actions"""
+        # Increase anger gradually
+        agent.increase_anger(0.05)
+
+        # Villain moves more when angry
+        if agent.anger_level > 0.3 and agent.should_move(probability=0.3):
+            self._move_agent(agent)
+            return
+
+        # Check if angry enough to attack
+        if agent.is_angry() and self.step_count - agent.last_kill_step > 10:
+            other_agents = self._get_agents_at_location(agent.current_location)
+            potential_victims = [a for a in other_agents if a.name != agent.name and a.status == "alive" and a.role != "villain"]
+
+            if potential_victims:
+                victim = random.choice(potential_victims)
+                self._villain_attack(agent, victim)
+                return
+
+        # Sometimes just have a threatening conversation
+        if random.random() < 0.2:
+            other_agents = self._get_agents_at_location(agent.current_location)
+            other_agents = [a for a in other_agents if a.name != agent.name and a.status == "alive"]
+            if other_agents:
+                self._initiate_interaction(agent, random.choice(other_agents))
+
+    def _villain_attack(self, villain: Agent, victim: Agent):
+        """Villain attacks and kills a victim"""
+        location = self.locations[villain.current_location]
+
+        # Kill the victim
+        victim.kill()
+        villain.decrease_anger(0.5)
+        villain.last_kill_step = self.step_count
+
+        # Log the dramatic event
+        self._add_event({
+            "type": "attack",
+            "attacker": villain.name,
+            "victim": victim.name,
+            "location": location.name,
+            "time": self.current_time.strftime("%H:%M")
+        })
+
+        self.console.print(f"  ⚠️  [red bold]{villain.name} attacked {victim.name} at {location.name}! {victim.name} is dead![/red bold]")
+
+        # Add memories
+        villain.add_memory(
+            f"I attacked {victim.name} in a fit of rage at {location.name}",
+            importance=1.0,
+            location=location.name,
+            related_agents=[victim.name]
+        )
+
+        victim.add_memory(
+            f"I was attacked by {villain.name} at {location.name}",
+            importance=1.0,
+            location=location.name,
+            related_agents=[villain.name]
+        )
+
+    def _doctor_action(self, agent: Agent):
+        """Doctor-specific actions"""
+        # Check for dead agents at current location
+        agents_here = self._get_agents_at_location(agent.current_location)
+        dead_agents = [a for a in agents_here if a.status == "dead" and a.name != agent.name]
+
+        if dead_agents:
+            # Resurrect a dead agent
+            patient = random.choice(dead_agents)
+            self._doctor_resurrect(agent, patient)
+            return
+
+        # Move to find patients (check all locations for dead agents)
+        for loc_name, location in self.locations.items():
+            agents_at_loc = self._get_agents_at_location(loc_name)
+            if any(a.status == "dead" for a in agents_at_loc):
+                # Move towards location with dead agents
+                if loc_name != agent.current_location and random.random() < 0.7:
+                    available_locations = [name for name in self.locations.keys() if name != agent.current_location]
+                    # Try to move towards the location with dead agents
+                    if loc_name in available_locations:
+                        self._move_agent_to(agent, loc_name)
+                        return
+
+        # If no dead agents, move around or interact normally
+        if agent.should_move(probability=0.2):
+            self._move_agent(agent)
+        elif agent.should_interact(probability=0.4):
+            other_agents = self._get_agents_at_location(agent.current_location)
+            other_agents = [a for a in other_agents if a.name != agent.name and a.status == "alive"]
+            if other_agents:
+                self._initiate_interaction(agent, random.choice(other_agents))
+
+    def _doctor_resurrect(self, doctor: Agent, patient: Agent):
+        """Doctor resurrects a dead agent"""
+        location = self.locations[doctor.current_location]
+
+        # Resurrect the patient
+        patient.resurrect()
+
+        # Log the miraculous event
+        self._add_event({
+            "type": "resurrection",
+            "doctor": doctor.name,
+            "patient": patient.name,
+            "location": location.name,
+            "time": self.current_time.strftime("%H:%M")
+        })
+
+        self.console.print(f"  ✨ [green bold]{doctor.name} resurrected {patient.name} at {location.name}! {patient.name} is alive again![/green bold]")
+
+        # Add memories
+        doctor.add_memory(
+            f"I miraculously brought {patient.name} back to life at {location.name}",
+            importance=1.0,
+            location=location.name,
+            related_agents=[patient.name]
+        )
+
+        patient.add_memory(
+            f"I was brought back to life by {doctor.name} at {location.name}",
+            importance=1.0,
+            location=location.name,
+            related_agents=[doctor.name]
+        )
+
+    def _move_agent_to(self, agent: Agent, target_location: str):
+        """Move agent to a specific location"""
+        current_location = self.locations[agent.current_location]
+        new_location = self.locations[target_location]
+
+        # Check capacity
+        if not new_location.can_accept_agent():
+            return
+
+        # Move the agent
+        current_location.remove_agent(agent.name)
+        new_location.add_agent(agent.name)
+        agent.move_to(target_location)
+
+        # Log event
+        self._add_event({
+            "type": "movement",
+            "agent": agent.name,
+            "from": current_location.name,
+            "to": target_location,
+            "time": self.current_time.strftime("%H:%M")
+        })
+
+        self.console.print(f"  🚶 [yellow]{agent.name}[/yellow] moved from {current_location.name} to [green]{target_location}[/green]")
 
     def _get_agents_at_location(self, location_name: str) -> List[Agent]:
         """Get all agents at a specific location"""
