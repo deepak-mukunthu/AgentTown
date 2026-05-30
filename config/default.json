@@ -1,0 +1,52 @@
+{
+  "simulation": {
+    "max_agents": 8,
+    "simulation_speed": 1.0,
+    "time_step_seconds": 60,
+    "max_steps": 1000
+  },
+  "agents": {
+    "personality_traits": [
+      "friendly",
+      "curious",
+      "thoughtful",
+      "energetic",
+      "creative",
+      "analytical"
+    ],
+    "interaction_probability": 0.3,
+    "movement_probability": 0.2
+  },
+  "locations": [
+    {
+      "name": "Town Square",
+      "description": "The central gathering place with benches and a fountain",
+      "capacity": 10
+    },
+    {
+      "name": "Coffee Shop",
+      "description": "A cozy cafe with comfortable seating and great coffee",
+      "capacity": 6
+    },
+    {
+      "name": "Library",
+      "description": "A quiet place filled with books and knowledge",
+      "capacity": 8
+    },
+    {
+      "name": "Park",
+      "description": "A peaceful outdoor space with trees and walking paths",
+      "capacity": 12
+    },
+    {
+      "name": "Community Center",
+      "description": "A space for gatherings, events, and activities",
+      "capacity": 15
+    }
+  ],
+  "memory": {
+    "max_memories_per_agent": 100,
+    "importance_threshold": 0.5,
+    "retrieval_count": 5
+  }
+}
