@@ -78,7 +78,8 @@ def get_simulation_state():
         "step_count": simulation.step_count,
         "current_time": simulation.current_time.strftime("%H:%M"),
         "agents": [],
-        "locations": {}
+        "locations": {},
+        "recent_events": simulation.recent_events[-20:]  # Last 20 events
     }
 
     # Add agent information
@@ -88,7 +89,8 @@ def get_simulation_state():
             "personality": ", ".join(agent.personality_traits),
             "style": agent.conversation_style,
             "location": agent.current_location,
-            "memory_count": len(agent.memories)
+            "memory_count": len(agent.memories),
+            "role": agent.role
         })
 
     # Add location information

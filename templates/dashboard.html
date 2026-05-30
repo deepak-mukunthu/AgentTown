@@ -98,7 +98,7 @@
 
         .dashboard {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 20px;
         }
 
@@ -242,6 +242,56 @@
             padding: 20px;
             font-style: italic;
         }
+
+        .activity-feed {
+            max-height: 600px;
+            overflow-y: auto;
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .activity-item {
+            padding: 12px;
+            background: white;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            border-left: 3px solid #667eea;
+        }
+
+        .activity-item.movement {
+            border-left-color: #f59e0b;
+        }
+
+        .activity-item.conversation {
+            border-left-color: #10b981;
+        }
+
+        .activity-time {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+
+        .conversation-exchange {
+            margin: 8px 0;
+            padding-left: 10px;
+            border-left: 2px solid #e5e7eb;
+        }
+
+        .speaker-name {
+            font-weight: bold;
+            color: #10b981;
+        }
+
+        .movement-text {
+            color: #666;
+        }
+
+        .movement-icon {
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
@@ -287,6 +337,13 @@
             <div class="panel">
                 <h2>👥 Agents</h2>
                 <div id="agents"></div>
+            </div>
+
+            <div class="panel">
+                <h2>💬 Live Activity Feed</h2>
+                <div class="activity-feed" id="activity-feed">
+                    <div class="empty-state">No activity yet. Click Start to begin!</div>
+                </div>
             </div>
         </div>
     </div>
@@ -346,10 +403,19 @@
             document.getElementById('locations').innerHTML = locationsHtml;
 
             // Update agents
+            const roleEmojis = {
+                'artist': '🎨',
+                'scholar': '📚',
+                'explorer': '🧭',
+                'socialite': '🎭',
+                'resident': '🏠'
+            };
+
             const agentsHtml = data.agents.map(agent => `
                 <div class="agent-card">
-                    <div class="agent-name">${agent.name}</div>
+                    <div class="agent-name">${roleEmojis[agent.role] || '👤'} ${agent.name}</div>
                     <div class="agent-details">
+                        <div><strong>Role:</strong> ${agent.role.charAt(0).toUpperCase() + agent.role.slice(1)}</div>
                         <div>📍 ${agent.location}</div>
                         <div>✨ ${agent.personality}</div>
                         <div>💬 ${agent.style}</div>
@@ -358,6 +424,47 @@
                 </div>
             `).join('');
             document.getElementById('agents').innerHTML = agentsHtml;
+
+            // Update activity feed
+            const activityFeed = document.getElementById('activity-feed');
+            if (data.recent_events && data.recent_events.length > 0) {
+                const eventsHtml = data.recent_events.slice().reverse().map(event => {
+                    if (event.type === 'conversation') {
+                        const exchanges = event.exchanges.map(ex =>
+                            `<div class="conversation-exchange">
+                                <span class="speaker-name">${ex.speaker}:</span> "${ex.message}"
+                            </div>`
+                        ).join('');
+                        return `
+                            <div class="activity-item conversation">
+                                <div class="activity-time">${event.time}</div>
+                                <div><strong>💬 Conversation at ${event.location}</strong></div>
+                                <div style="font-size: 0.85em; color: #666;">Between ${event.participants.join(' and ')}</div>
+                                ${exchanges}
+                            </div>
+                        `;
+                    } else if (event.type === 'movement') {
+                        return `
+                            <div class="activity-item movement">
+                                <div class="activity-time">${event.time}</div>
+                                <div class="movement-text">
+                                    <span class="movement-icon">🚶</span>
+                                    <strong>${event.agent}</strong> moved from <strong>${event.from}</strong> to <strong>${event.to}</strong>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    return '';
+                }).join('');
+                activityFeed.innerHTML = eventsHtml;
+
+                // Auto-scroll to bottom if user is near bottom
+                if (activityFeed.scrollHeight - activityFeed.scrollTop < activityFeed.clientHeight + 100) {
+                    activityFeed.scrollTop = activityFeed.scrollHeight;
+                }
+            } else {
+                activityFeed.innerHTML = '<div class="empty-state">No activity yet. Click Start to begin!</div>';
+            }
         }
 
         function startSimulation() {

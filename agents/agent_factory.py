@@ -23,23 +23,61 @@ class AgentFactory:
         "humorous", "direct", "thoughtful", "inquisitive"
     ]
 
+    ROLES = {
+        "artist": {
+            "traits": ["creative", "thoughtful", "empathetic"],
+            "preferred_locations": ["Coffee Shop", "Park", "Community Center"],
+            "style": "thoughtful"
+        },
+        "scholar": {
+            "traits": ["analytical", "curious", "thoughtful"],
+            "preferred_locations": ["Library", "Coffee Shop"],
+            "style": "philosophical"
+        },
+        "explorer": {
+            "traits": ["adventurous", "energetic", "curious"],
+            "preferred_locations": ["Park", "Town Square"],
+            "style": "enthusiastic"
+        },
+        "socialite": {
+            "traits": ["friendly", "optimistic", "witty"],
+            "preferred_locations": ["Town Square", "Coffee Shop", "Community Center"],
+            "style": "casual"
+        },
+        "resident": {
+            "traits": ["calm", "pragmatic", "friendly"],
+            "preferred_locations": [],
+            "style": "casual"
+        }
+    }
+
     @classmethod
-    def create_agent(cls, name: Optional[str] = None, starting_location: str = "Town Square") -> Agent:
+    def create_agent(cls, name: Optional[str] = None, starting_location: str = "Town Square", role: Optional[str] = None) -> Agent:
         """Create a single agent with random personality"""
         if name is None:
             name = random.choice(cls.FIRST_NAMES)
 
-        # Select 2-4 personality traits
-        num_traits = random.randint(2, 4)
-        traits = random.sample(cls.PERSONALITY_TRAITS, num_traits)
+        # Assign role if not provided
+        if role is None:
+            role = random.choice(list(cls.ROLES.keys()))
 
-        conversation_style = random.choice(cls.CONVERSATION_STYLES)
+        role_config = cls.ROLES[role]
+
+        # Use role-based traits, with some randomization
+        base_traits = role_config["traits"]
+        extra_traits = random.sample([t for t in cls.PERSONALITY_TRAITS if t not in base_traits],
+                                     random.randint(0, 2))
+        traits = base_traits + extra_traits
+
+        conversation_style = role_config["style"]
 
         return Agent(
             name=name,
             personality_traits=traits,
             current_location=starting_location,
-            conversation_style=conversation_style
+            conversation_style=conversation_style,
+            role=role,
+            preferred_locations=role_config["preferred_locations"]
         )
 
     @classmethod

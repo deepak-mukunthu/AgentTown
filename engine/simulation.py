@@ -27,6 +27,8 @@ class SimulationEngine:
         self.step_count = 0
         self.console = console or Console()
         self.conversation_manager = ConversationManager()
+        self.recent_events = []  # Track recent events (conversations, movements)
+        self.max_events = 50  # Keep last 50 events
 
         # Place agents in their starting locations
         for agent in agents:
@@ -70,7 +72,12 @@ class SimulationEngine:
 
         # Choose a new location (different from current)
         available_locations = [name for name in self.locations.keys() if name != agent.current_location]
-        new_location_name = random.choice(available_locations)
+
+        # Use agent's preferred location if available
+        new_location_name = agent.get_preferred_next_location(available_locations)
+        if not new_location_name:
+            new_location_name = random.choice(available_locations)
+
         new_location = self.locations[new_location_name]
 
         # Check capacity
@@ -82,6 +89,15 @@ class SimulationEngine:
         new_location.add_agent(agent.name)
         agent.move_to(new_location_name)
 
+        # Log event
+        self._add_event({
+            "type": "movement",
+            "agent": agent.name,
+            "from": current_location.name,
+            "to": new_location_name,
+            "time": self.current_time.strftime("%H:%M")
+        })
+
         self.console.print(f"  🚶 [yellow]{agent.name}[/yellow] moved from {current_location.name} to [green]{new_location_name}[/green]")
 
     def _initiate_interaction(self, agent1: Agent, agent2: Agent):
@@ -92,6 +108,15 @@ class SimulationEngine:
         conversation = self.conversation_manager.generate_conversation(
             agent1, agent2, location, self.current_time
         )
+
+        # Log conversation event
+        self._add_event({
+            "type": "conversation",
+            "location": location.name,
+            "participants": [agent1.name, agent2.name],
+            "exchanges": conversation["exchanges"],
+            "time": self.current_time.strftime("%H:%M")
+        })
 
         # Display conversation
         self._display_conversation(conversation, location.name)
@@ -141,6 +166,13 @@ class SimulationEngine:
             table.add_row(location_name, agents_str, str(len(location.agents)))
 
         self.console.print(table)
+
+    def _add_event(self, event: Dict):
+        """Add an event to the recent events list"""
+        self.recent_events.append(event)
+        # Keep only the most recent events
+        if len(self.recent_events) > self.max_events:
+            self.recent_events = self.recent_events[-self.max_events:]
 
     def get_statistics(self) -> Dict:
         """Get simulation statistics"""

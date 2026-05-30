@@ -20,6 +20,8 @@ class Agent(BaseModel):
     current_location: str
     memories: List[Memory] = Field(default_factory=list)
     conversation_style: str = "friendly"
+    role: str = "resident"  # resident, artist, scholar, explorer, socialite
+    preferred_locations: List[str] = Field(default_factory=list)
 
     class Config:
         arbitrary_types_allowed = True
@@ -61,10 +63,33 @@ class Agent(BaseModel):
 
     def should_interact(self, probability: float = 0.3) -> bool:
         """Determine if agent should initiate interaction"""
+        # Role-based interaction probability
+        if self.role == "socialite":
+            probability *= 2.0  # Socialites interact more
+        elif self.role == "scholar":
+            probability *= 1.2  # Scholars like discussions
+
         return random.random() < probability
+
+    def get_preferred_next_location(self, available_locations: List[str]) -> Optional[str]:
+        """Get preferred next location based on role"""
+        if self.preferred_locations:
+            # Filter for preferred locations that are available
+            preferred_available = [loc for loc in self.preferred_locations if loc in available_locations]
+            if preferred_available:
+                return random.choice(preferred_available)
+
+        # Default: random choice
+        return random.choice(available_locations) if available_locations else None
 
     def should_move(self, probability: float = 0.2) -> bool:
         """Determine if agent should move to a new location"""
+        # Role-based movement probability
+        if self.role == "explorer":
+            probability *= 2.0  # Explorers move more
+        elif self.role == "scholar":
+            probability *= 0.5  # Scholars stay put more
+
         return random.random() < probability
 
     def get_personality_description(self) -> str:
