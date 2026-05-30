@@ -19,7 +19,7 @@ class ConversationManager:
         self.conversation_templates = [
             {
                 "opener": "Hey {other}, how's your day going?",
-                "response": "Pretty good, {self}! Just enjoying the atmosphere here. How about you?"
+                "response": "Pretty good, thanks! Just enjoying the atmosphere here. How about you?"
             },
             {
                 "opener": "Hi {other}! Have you been to the {location} before?",
@@ -27,7 +27,7 @@ class ConversationManager:
             },
             {
                 "opener": "Good to see you, {other}!",
-                "response": "You too, {self}! Beautiful day, isn't it?"
+                "response": "You too! Beautiful day, isn't it?"
             }
         ]
 
