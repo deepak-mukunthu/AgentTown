@@ -205,7 +205,7 @@ if __name__ == '__main__':
     print(f"✓ Set up {len(simulation.locations)} locations")
     print()
     print("Starting web server...")
-    print("🌐 Open your browser to: http://localhost:5000")
+    print("🌐 Open your browser to: http://localhost:9000")
     print()
 
-    socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+    socketio.run(app, debug=False, host='127.0.0.1', port=9000, allow_unsafe_werkzeug=True)
