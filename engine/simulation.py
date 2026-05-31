@@ -175,7 +175,8 @@ class SimulationEngine:
         # Check if angry enough to attack
         if agent.is_angry() and self.step_count - agent.last_kill_step > 10:
             other_agents = self._get_agents_at_location(agent.current_location)
-            potential_victims = [a for a in other_agents if a.name != agent.name and a.status == "alive" and a.role != "villain"]
+            # IMPORTANT: Villain cannot kill the doctor (game balance)
+            potential_victims = [a for a in other_agents if a.name != agent.name and a.status == "alive" and a.role not in ["villain", "doctor"]]
 
             if potential_victims:
                 victim = random.choice(potential_victims)
@@ -226,6 +227,18 @@ class SimulationEngine:
 
     def _doctor_action(self, agent: Agent):
         """Doctor-specific actions"""
+        # Doctor has immunity - if somehow killed, self-resurrect immediately
+        if agent.status == "dead":
+            agent.resurrect()
+            self._add_event({
+                "type": "self_resurrection",
+                "doctor": agent.name,
+                "location": agent.current_location,
+                "time": self.current_time.strftime("%H:%M")
+            })
+            self.console.print(f"  ⚡ [cyan bold]{agent.name} (Doctor) used divine powers to self-resurrect![/cyan bold]")
+            return
+
         # Check for dead agents at current location
         agents_here = self._get_agents_at_location(agent.current_location)
         dead_agents = [a for a in agents_here if a.status == "dead" and a.name != agent.name]

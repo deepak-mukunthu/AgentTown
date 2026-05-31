@@ -110,6 +110,10 @@ class Agent(BaseModel):
         """Bring agent back to life"""
         self.status = "alive"
 
+    def is_immortal(self) -> bool:
+        """Check if agent cannot be killed (doctor is immortal for game balance)"""
+        return self.role == "doctor"
+
     def should_move(self, probability: float = 0.2) -> bool:
         """Determine if agent should move to a new location"""
         if self.status == "dead":
