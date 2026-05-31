@@ -2,13 +2,42 @@
 
 A multi-agent simulation where AI agents live, interact, and form a virtual community. Agents have personalities, memories, and can engage in dynamic conversations with each other.
 
+**🎭 NEW:** Features a malicious villain (😈) who gets angry and kills others, and a mysterious doctor (⚕️) who resurrects the dead!
+
+## ⚡ Quick Start
+
+```bash
+./demo.sh
+```
+
+Then open **http://localhost:3000** and click **▶️ Start**!
+
+See [QUICKSTART.md](QUICKSTART.md) for detailed setup.
+
 ## Features
 
+### Core Simulation
 - **Autonomous Agents**: Each agent has unique personality traits and behaviors
 - **Dynamic Interactions**: Agents can initiate conversations and respond to each other
 - **Memory System**: Agents remember past interactions and use them to inform future behavior
 - **Spatial Environment**: Agents move around a virtual town with different locations
 - **Emergent Behaviors**: Complex social dynamics emerge from simple agent rules
+
+### 7 Unique Roles
+- 😈 **Villain**: Gets angry and attacks others when rage exceeds 60%
+- ⚕️ **Doctor**: Resurrects dead agents and searches for casualties
+- 🎨 **Artist**: Creative personality, prefers inspiring locations
+- 📚 **Scholar**: Analytical, loves libraries and discussions
+- 🧭 **Explorer**: Adventurous, moves 2x more frequently
+- 🎭 **Socialite**: Friendly, interacts 2x more frequently
+- 🏠 **Resident**: Balanced behavior with no special traits
+
+### Life & Death Drama
+- **Anger System**: Villain's rage builds gradually (visual anger bar)
+- **Attack Mechanics**: Villain kills when anger reaches threshold
+- **Death Status**: Agents can die and become inactive (💀)
+- **Resurrection**: Doctor brings dead agents back to life (✨)
+- **Real-time Events**: Watch attacks and resurrections in activity feed
 
 ## Architecture
 
